@@ -1,0 +1,14 @@
+{
+  "name": "nadia-cornish-classic",
+  "version": "1.0.0",
+  "description": "Nadia Cornish Classic Golf Tournament — Live Web App",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "web-push": "^3.6.7",
+    "ws": "^8.16.0"
+  }
+}
