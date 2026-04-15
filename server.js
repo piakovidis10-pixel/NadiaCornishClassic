@@ -8,18 +8,25 @@ const path     = require('path');
 const http     = require('http');
 
 // ── VAPID Keys ────────────────────────────────────────────────────────────────
-// Generated once and persisted so subscriptions survive server restarts.
-const VAPID_FILE = path.join(__dirname, 'vapid-keys.json');
+// Priority: environment variables (production) → vapid-keys.json (local dev)
 let vapidKeys;
-if (fs.existsSync(VAPID_FILE)) {
-  vapidKeys = JSON.parse(fs.readFileSync(VAPID_FILE, 'utf8'));
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  vapidKeys = {
+    publicKey:  process.env.VAPID_PUBLIC_KEY,
+    privateKey: process.env.VAPID_PRIVATE_KEY
+  };
 } else {
-  vapidKeys = webpush.generateVAPIDKeys();
-  fs.writeFileSync(VAPID_FILE, JSON.stringify(vapidKeys, null, 2));
-  console.log('Generated new VAPID keys → vapid-keys.json');
+  const VAPID_FILE = path.join(__dirname, 'vapid-keys.json');
+  if (fs.existsSync(VAPID_FILE)) {
+    vapidKeys = JSON.parse(fs.readFileSync(VAPID_FILE, 'utf8'));
+  } else {
+    vapidKeys = webpush.generateVAPIDKeys();
+    fs.writeFileSync(VAPID_FILE, JSON.stringify(vapidKeys, null, 2));
+    console.log('Generated new VAPID keys → vapid-keys.json');
+  }
 }
 webpush.setVapidDetails(
-  'mailto:admin@nadiacornishclassic.local',
+  process.env.VAPID_EMAIL || 'mailto:admin@nadiacornishclassic.local',
   vapidKeys.publicKey,
   vapidKeys.privateKey
 );
