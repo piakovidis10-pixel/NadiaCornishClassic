@@ -26,7 +26,7 @@ if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
   }
 }
 webpush.setVapidDetails(
-  process.env.VAPID_EMAIL || 'mailto:admin@nadiacornishclassic.local',
+  process.env.VAPID_EMAIL || 'mailto:golf@nadiacornishclassic.com',
   vapidKeys.publicKey,
   vapidKeys.privateKey
 );
