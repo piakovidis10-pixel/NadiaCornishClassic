@@ -879,7 +879,6 @@ function initWebSocket(){
    ══════════════════════════════════════════════════════════ */
 async function initNotifications(){
   if(!('serviceWorker'in navigator)||!('PushManager'in window)){
-    // Push not supported in this browser — keep bell visible, tapping will explain why
     _setNotifBtn(false);return;
   }
   try{
@@ -887,11 +886,24 @@ async function initNotifications(){
     const reg=await navigator.serviceWorker.ready;
     const existing=await reg.pushManager.getSubscription();
     if(existing){
-      _pushSub=existing;
-      // Re-register with server on every page load — server may have restarted
-      fetch('/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(existing)}).catch(()=>{});
-      _setNotifBtn(true);
+      // Verify this subscription was made with the server's current VAPID key.
+      // If not, the server will 403 — silently unsubscribe so the user can re-subscribe cleanly.
+      const res=await fetch('/api/public-key');
+      const{publicKey}=await res.json();
+      const serverKey=_b64ToU8(publicKey);
+      const subKey=existing.options&&existing.options.applicationServerKey
+        ?new Uint8Array(existing.options.applicationServerKey):null;
+      const match=subKey&&subKey.length===serverKey.length&&serverKey.every((b,i)=>b===subKey[i]);
+      if(match){
+        _pushSub=existing;
+        fetch('/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify(existing)}).catch(()=>{});
+        _setNotifBtn(true);
+      }else{
+        // Stale subscription — quietly drop it so user gets a fresh one
+        await existing.unsubscribe().catch(()=>{});
+        _setNotifBtn(false);
+      }
     }
     else{_setNotifBtn(false);}
   }catch(e){
