@@ -879,7 +879,8 @@ function initWebSocket(){
    ══════════════════════════════════════════════════════════ */
 async function initNotifications(){
   if(!('serviceWorker'in navigator)||!('PushManager'in window)){
-    const b=document.getElementById('notif-btn');if(b)b.remove();return;
+    // Push not supported in this browser — keep bell visible, tapping will explain why
+    _setNotifBtn(false);return;
   }
   try{
     await navigator.serviceWorker.register('/sw.js');
@@ -901,7 +902,13 @@ async function initNotifications(){
 
 async function toggleNotifications(){
   if(!('serviceWorker'in navigator)||!('PushManager'in window)){
-    alert('Push notifications are not supported in this browser.');return;
+    const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    if(isIOS){
+      alert('To get notifications on iPhone:\n\n1. Tap the Share button (□↑) in Safari\n2. Tap "Add to Home Screen"\n3. Open the app from your Home Screen\n4. Tap the bell icon again');
+    } else {
+      alert('Push notifications are not supported in this browser. Try Chrome or Edge.');
+    }
+    return;
   }
   // Unsubscribe if already subscribed
   if(_pushSub){
