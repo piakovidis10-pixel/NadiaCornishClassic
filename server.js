@@ -160,7 +160,7 @@ app.post('/api/score', (req, res) => {
       eagle:     { emoji: '🦅', label: 'Eagle!',         diff: '−2' },
       birdie:    { emoji: '🐦', label: 'Birdie!',         diff: '−1' },
       double:    { emoji: '😬', label: 'Double Bogey',   diff: '+2' },
-      triple:    { emoji: '💀', label: `+${over} Bogey`, diff: `+${over}` },
+      triple:    { emoji: '💀', label: over === 3 ? 'Triple Bogey' : over === 4 ? 'Quadruple Bogey' : `+${over} Bogey`, diff: `+${over}` },
     };
     const { emoji, label, diff } = TYPES[notifType];
 
