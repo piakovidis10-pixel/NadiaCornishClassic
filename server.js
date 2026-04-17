@@ -183,17 +183,24 @@ function broadcast(msg) {
 }
 
 function sendPush({ title, body, data }) {
-  const payload  = JSON.stringify({ title, body, data });
-  const invalid  = [];
+  console.log(`[push] attempting to notify ${subscriptions.length} subscriber(s)`);
+  if (subscriptions.length === 0) {
+    console.log('[push] no subscribers — nobody will receive this notification');
+    return;
+  }
 
-  subscriptions.forEach(sub => {
-    webpush.sendNotification(sub, payload).catch(err => {
-      if (err.statusCode === 410 || err.statusCode === 404) {
-        invalid.push(sub.endpoint); // expired / invalid subscription
-      } else {
-        console.error('[push error]', err.statusCode, err.message);
-      }
-    });
+  const payload = JSON.stringify({ title, body, data });
+  const invalid = [];
+
+  subscriptions.forEach((sub, i) => {
+    webpush.sendNotification(sub, payload)
+      .then(() => console.log(`[push] delivered to subscriber ${i + 1}`))
+      .catch(err => {
+        console.error(`[push] FAILED for subscriber ${i + 1} — status: ${err.statusCode} — ${err.message}`);
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          invalid.push(sub.endpoint);
+        }
+      });
   });
 
   if (invalid.length) {
