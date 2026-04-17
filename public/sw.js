@@ -1,24 +1,23 @@
 'use strict';
 
-// Service Worker for Nadia Cornish Classic
-// Handles incoming push notifications and notification click events.
-
 self.addEventListener('push', event => {
-  let data = { title: 'Nadia Cornish Classic', body: '' };
+  let title = 'Nadia Cornish Classic';
+  let body  = '';
+  let data  = {};
+
   if (event.data) {
-    try { data = event.data.json(); }
-    catch (_) { data.body = event.data.text(); }
+    try {
+      const d = event.data.json();
+      title = d.title || title;
+      body  = d.body  || body;
+      data  = d.data  || data;
+    } catch (_) {
+      body = event.data.text();
+    }
   }
 
   event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body:               data.body || '',
-      data:               data.data || {},
-      vibrate:            [200, 100, 200, 100, 200],
-      requireInteraction: false,
-      // Use a unique tag per notification so they stack rather than replace each other
-      tag: `golf-${Date.now()}`
-    })
+    self.registration.showNotification(title, { body, data, tag: 'golf-notif' })
   );
 });
 
@@ -27,9 +26,6 @@ self.addEventListener('notificationclick', event => {
   event.waitUntil(
     clients
       .matchAll({ type: 'window', includeUncontrolled: true })
-      .then(openClients => {
-        if (openClients.length > 0) return openClients[0].focus();
-        return clients.openWindow('/');
-      })
+      .then(list => list.length ? list[0].focus() : clients.openWindow('/'))
   );
 });
