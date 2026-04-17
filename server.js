@@ -66,7 +66,19 @@ for (let id = 0; id < 5; id++) {
   teeOffs.day2[id] = Array(18).fill('');
 }
 
-let subscriptions = []; // active push subscriptions
+// Persist subscriptions to disk so they survive server restarts
+const SUBS_FILE = path.join(__dirname, 'subscriptions.json');
+function loadSubs() {
+  try { if (fs.existsSync(SUBS_FILE)) return JSON.parse(fs.readFileSync(SUBS_FILE, 'utf8')); }
+  catch (e) { console.error('[subs] load error:', e.message); }
+  return [];
+}
+function saveSubs() {
+  try { fs.writeFileSync(SUBS_FILE, JSON.stringify(subscriptions)); }
+  catch (e) { console.error('[subs] save error:', e.message); }
+}
+let subscriptions = loadSubs();
+console.log(`[subs] loaded ${subscriptions.length} saved subscription(s)`);
 
 // ── Express app ───────────────────────────────────────────────────────────────
 const app = express();
@@ -89,6 +101,7 @@ app.post('/api/subscribe', (req, res) => {
   if (!sub || !sub.endpoint) return res.status(400).json({ error: 'Invalid subscription' });
   if (!subscriptions.some(s => s.endpoint === sub.endpoint)) {
     subscriptions.push(sub);
+    saveSubs();
   }
   console.log(`[push] subscribed — total: ${subscriptions.length}`);
   res.json({ ok: true });
@@ -98,6 +111,7 @@ app.post('/api/subscribe', (req, res) => {
 app.delete('/api/unsubscribe', (req, res) => {
   const { endpoint } = req.body;
   subscriptions = subscriptions.filter(s => s.endpoint !== endpoint);
+  saveSubs();
   console.log(`[push] unsubscribed — total: ${subscriptions.length}`);
   res.json({ ok: true });
 });

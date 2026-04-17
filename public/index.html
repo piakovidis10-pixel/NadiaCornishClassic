@@ -885,7 +885,13 @@ async function initNotifications(){
     await navigator.serviceWorker.register('/sw.js');
     const reg=await navigator.serviceWorker.ready;
     const existing=await reg.pushManager.getSubscription();
-    if(existing){_pushSub=existing;_setNotifBtn(true);}
+    if(existing){
+      _pushSub=existing;
+      // Re-register with server on every page load — server may have restarted
+      fetch('/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(existing)}).catch(()=>{});
+      _setNotifBtn(true);
+    }
     else{_setNotifBtn(false);}
   }catch(e){
     console.warn('Push notification init failed:',e);
