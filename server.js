@@ -138,24 +138,34 @@ app.post('/api/score', (req, res) => {
 
   if (scoreNum && !isNaN(scoreNum) && scoreNum !== prevNum) {
     const diff = par - scoreNum;
-    if      (diff >= 3) notifType = 'albatross';
+    if      (diff >= 3)  notifType = 'albatross';
     else if (diff === 2) notifType = 'eagle';
     else if (diff === 1) notifType = 'birdie';
+    else if (diff === -2) notifType = 'double';
+    else if (diff <= -3)  notifType = 'triple';
   }
 
   // Broadcast to all WebSocket clients
   broadcast({ type: 'score_update', allScores: scores, teeOffs });
 
-  // Send push notifications on birdie / eagle / albatross
+  // Send push notifications
   if (notifType) {
     const team = TEAMS[dayKey].find(t => t.id === tid);
     const teamName = team ? team.team.join(' & ') : `Team ${tid + 1}`;
     const holeNum  = hi + 1;
-    const label    = notifType === 'albatross' ? 'Albatross!'
-                   : notifType === 'eagle'     ? 'Eagle!'
-                   : 'Birdie!';
-    const title = `${label} — ${teamName}`;
-    const body  = `Hole ${holeNum}  ·  Score ${scoreNum}  ·  Par ${par}  ·  Day ${day}`;
+    const over     = scoreNum - par;
+
+    const TYPES = {
+      albatross: { emoji: '🦅', label: 'Albatross!',    diff: `−${par - scoreNum}` },
+      eagle:     { emoji: '🦅', label: 'Eagle!',         diff: '−2' },
+      birdie:    { emoji: '🐦', label: 'Birdie!',         diff: '−1' },
+      double:    { emoji: '😬', label: 'Double Bogey',   diff: '+2' },
+      triple:    { emoji: '💀', label: `+${over} Bogey`, diff: `+${over}` },
+    };
+    const { emoji, label, diff } = TYPES[notifType];
+
+    const title = `${emoji}  ${label}  (${diff})`;
+    const body  = `${teamName}  ·  Hole ${holeNum}  ·  ${scoreNum} shots  ·  Par ${par}  ·  Day ${day}`;
     console.log(`[notif] ${title} | ${body}`);
     sendPush({ title, body, data: { day, teamId: tid, holeIndex: hi, notifType } });
   }
