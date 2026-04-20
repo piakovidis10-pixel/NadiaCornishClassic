@@ -164,8 +164,8 @@ app.post('/api/score', (req, res) => {
     };
     const { emoji, label, diff } = TYPES[notifType];
 
-    const title = `${emoji}  ${teamName}`;
-    const body  = `${label}  (${diff})  ·  Hole ${holeNum}  ·  ${scoreNum} shots  ·  Par ${par}  ·  Day ${day}`;
+    const title = `${emoji} ${label} — ${teamName}`;
+    const body  = `Scored ${scoreNum} on Hole ${holeNum} (Par ${par}, Day ${day})`;
     console.log(`[notif] ${title} | ${body}`);
     sendPush({ title, body, data: { day, teamId: tid, holeIndex: hi, notifType } });
   }
